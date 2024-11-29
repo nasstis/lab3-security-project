@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "956331446509",
+    "project_id": "project-security-a7e33",
+    "storage_bucket": "project-security-a7e33.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:956331446509:android:c523080fdedce8a718fce4",
+        "android_client_info": {
+          "package_name": "com.security.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD3UTj8RN0ri9fKt_Moru8nZt2vkzmYKFw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

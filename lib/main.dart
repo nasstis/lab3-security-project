@@ -1,10 +1,16 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:password_project/firebase_options.dart';
 import 'package:password_project/ui/auth/login_screen.dart';
 import 'package:password_project/utils/theme/theme_data/elevated_button.dart';
 import 'package:password_project/utils/theme/theme_data/input_decoration.dart';
 import 'package:password_project/utils/theme/theme_data/text_button.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 
