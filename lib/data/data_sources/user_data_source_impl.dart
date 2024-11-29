@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crypt/crypt.dart';
 import 'package:password_project/data/data_sources/user_data_source.dart';
 import 'package:password_project/data/model/user.dart';
+import 'package:password_project/domain/exceptions/auth_excpetions.dart';
 import 'package:uuid/uuid.dart';
 
 class UserDataSourceImpl extends UserDataSource {
@@ -14,10 +15,11 @@ class UserDataSourceImpl extends UserDataSource {
     final hashedPassword = _hashPassword(password);
 
     final user = UserModel(
-        id: const Uuid().v4(),
-        email: email,
-        name: name,
-        passwordHash: hashedPassword);
+      id: const Uuid().v4(),
+      email: email,
+      name: name,
+      passwordHash: hashedPassword,
+    );
 
     await firestore.collection('users').add(user.toMap());
   }
@@ -30,7 +32,7 @@ class UserDataSourceImpl extends UserDataSource {
         .get();
 
     if (snapshot.docs.isEmpty) {
-      throw Exception('User not found');
+      throw AuthException('User not registered.');
     }
 
     final userDoc = snapshot.docs.first;
@@ -38,7 +40,7 @@ class UserDataSourceImpl extends UserDataSource {
     final passwordHash = data['passwordHash'] as String;
 
     if (!_verifyPassword(password, passwordHash)) {
-      throw Exception('Wrong password');
+      throw AuthException('Incorrect password.');
     }
 
     return UserModel.fromMap(data);
