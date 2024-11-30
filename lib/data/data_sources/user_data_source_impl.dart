@@ -6,9 +6,9 @@ import 'package:password_project/domain/exceptions/auth_excpetions.dart';
 import 'package:uuid/uuid.dart';
 
 class UserDataSourceImpl extends UserDataSource {
-  final FirebaseFirestore firestore;
+  final usersCollection = FirebaseFirestore.instance.collection('users');
 
-  UserDataSourceImpl({required this.firestore});
+  UserDataSourceImpl();
 
   @override
   Future<void> registerUser(String email, String password, String name) async {
@@ -21,18 +21,16 @@ class UserDataSourceImpl extends UserDataSource {
       passwordHash: hashedPassword,
     );
 
-    await firestore.collection('users').add(user.toMap());
+    await usersCollection.add(user.toMap());
   }
 
   @override
   Future<UserModel?> loginUser(String email, String password) async {
-    final snapshot = await firestore
-        .collection('users')
-        .where('email', isEqualTo: email)
-        .get();
+    final snapshot =
+        await usersCollection.where('email', isEqualTo: email).get();
 
     if (snapshot.docs.isEmpty) {
-      throw AuthException('User not registered.');
+      throw AuthException('User not registered. Try another email or sign up');
     }
 
     final userDoc = snapshot.docs.first;
@@ -40,7 +38,7 @@ class UserDataSourceImpl extends UserDataSource {
     final passwordHash = data['passwordHash'] as String;
 
     if (!_verifyPassword(password, passwordHash)) {
-      throw AuthException('Incorrect password.');
+      throw AuthException('Wrong credentials. Please try again');
     }
 
     return UserModel.fromMap(data);

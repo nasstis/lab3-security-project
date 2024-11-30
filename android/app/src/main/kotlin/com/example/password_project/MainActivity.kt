@@ -1,4 +1,4 @@
-package com.example.password_project
+package com.security.app
 
 import io.flutter.embedding.android.FlutterActivity
 
