@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:password_project/ui/auth/auth_view_model.dart';
 import 'package:password_project/ui/auth/components/auth_buttons.dart';
 import 'package:password_project/ui/auth/components/login_form.dart';
 import 'package:password_project/ui/auth/register_screen.dart';
+import 'package:provider/provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,8 +17,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  bool emailError = false;
-  bool passwordError = false;
   final ValueNotifier<bool> _showPassword = ValueNotifier(false);
 
   @override
@@ -38,8 +38,28 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
+  Future<void> _login(BuildContext context) async {
+    final authViewModel = context.read<AuthViewModel>();
+    FocusScope.of(context).unfocus();
+
+    if (_formKey.currentState!.validate()) {
+      await authViewModel.loginUser(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+      );
+
+      if (authViewModel.errorMessage != null) {
+        _showErrorToast(context, authViewModel.errorMessage!);
+      } else {
+        print('login success');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final authViewModel = context.watch<AuthViewModel>();
+
     return Scaffold(
       body: GestureDetector(
         onTap: () {
@@ -65,25 +85,36 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 24),
                       LoginForm(
-                          formKey: _formKey,
-                          emailController: _emailController,
-                          passwordController: _passwordController,
-                          showPassword: _showPassword),
+                        formKey: _formKey,
+                        emailController: _emailController,
+                        passwordController: _passwordController,
+                        showPassword: _showPassword,
+                      ),
                       const Spacer(),
-                      AuthButtons(
-                        onSignUpPressed: () {
-                          Navigator.push(
+                      if (authViewModel.isLoading)
+                        const Column(
+                          children: [
+                            CircularProgressIndicator(
+                              color: Colors.black,
+                            ),
+                            SizedBox(
+                              height: 42,
+                            )
+                          ],
+                        ),
+                      if (!authViewModel.isLoading)
+                        AuthButtons(
+                          onSignUpPressed: () {
+                            Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => const RegisterScreen(),
-                              ));
-                        },
-                        onLoginPressed: () {
-                          FocusScope.of(context).unfocus();
-                          if (_formKey.currentState!.validate()) {}
-                        },
-                        isLoginScreen: true,
-                      ),
+                              ),
+                            );
+                          },
+                          onLoginPressed: () => _login(context),
+                          isLoginScreen: true,
+                        ),
                     ],
                   ),
                 ),

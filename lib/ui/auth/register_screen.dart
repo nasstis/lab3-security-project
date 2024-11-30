@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:password_project/ui/auth/auth_view_model.dart';
 import 'package:password_project/ui/auth/components/auth_buttons.dart';
 import 'package:password_project/ui/auth/components/sign_up_form.dart';
 import 'package:password_project/ui/auth/login_screen.dart';
+import 'package:provider/provider.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -43,8 +45,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
   }
 
+  Future<void> _signUp(BuildContext context) async {
+    final authViewModel = context.read<AuthViewModel>();
+    FocusScope.of(context).unfocus();
+
+    if (_formKey.currentState!.validate()) {
+      await authViewModel.registerUser(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+        _nameController.text,
+      );
+
+      if (authViewModel.errorMessage != null) {
+        _showErrorToast(context, authViewModel.errorMessage!);
+      } else {
+        print('register success');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final authViewModel = context.watch<AuthViewModel>();
+
     return Scaffold(
       body: GestureDetector(
         onTap: () {
@@ -79,17 +102,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         showConfirmPassword: _showConfirmPassword,
                       ),
                       const Spacer(),
-                      AuthButtons(
-                        onSignUpPressed: () {
-                          FocusScope.of(context).unfocus();
-                          if (_formKey.currentState!.validate()) {}
-                        },
-                        onLoginPressed: () {
-                          Navigator.of(context).push(MaterialPageRoute(
-                            builder: (context) => const LoginScreen(),
-                          ));
-                        },
-                      ),
+                      if (authViewModel.isLoading)
+                        const Column(
+                          children: [
+                            CircularProgressIndicator(
+                              color: Colors.black,
+                            ),
+                            SizedBox(
+                              height: 42,
+                            )
+                          ],
+                        ),
+                      if (!authViewModel.isLoading)
+                        AuthButtons(
+                          onSignUpPressed: () => _signUp(context),
+                          onLoginPressed: () {
+                            Navigator.of(context).push(MaterialPageRoute(
+                              builder: (context) => const LoginScreen(),
+                            ));
+                          },
+                        ),
                     ],
                   ),
                 ),
