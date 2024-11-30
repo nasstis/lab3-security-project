@@ -21,6 +21,14 @@ class UserDataSourceImpl extends UserDataSource {
       passwordHash: hashedPassword,
     );
 
+    final snapshot =
+        await usersCollection.where('email', isEqualTo: email).get();
+
+    if (snapshot.docs.isNotEmpty) {
+      throw AuthException(
+          'User already registered. Try another email or login');
+    }
+
     await usersCollection.add(user.toMap());
   }
 
