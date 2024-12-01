@@ -3,12 +3,14 @@ import 'package:crypt/crypt.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:password_project/data/data_sources/user_data_source.dart';
+import 'package:password_project/data/model/login_attempt.dart';
 import 'package:password_project/data/model/user.dart';
 import 'package:password_project/domain/exceptions/auth_excpetions.dart';
 import 'package:uuid/uuid.dart';
 
 class UserDataSourceImpl extends UserDataSource {
   final usersCollection = FirebaseFirestore.instance.collection('users');
+  final loginAttempts = FirebaseFirestore.instance.collection('loginAttempts');
   final _firebaseAuth = FirebaseAuth.instance;
   final _googleSignIn = GoogleSignIn();
 
@@ -38,22 +40,57 @@ class UserDataSourceImpl extends UserDataSource {
 
   @override
   Future<UserModel?> loginUser(String email, String password) async {
-    final snapshot =
-        await usersCollection.where('email', isEqualTo: email).get();
+    final recentAttempts = await FirebaseFirestore.instance
+        .collection('loginAttempts')
+        .where('email', isEqualTo: email)
+        .where('timestamp',
+            isGreaterThan: DateTime.now()
+                .subtract(const Duration(minutes: 30))
+                .toIso8601String())
+        .where('success', isEqualTo: false)
+        .get();
 
-    if (snapshot.docs.isEmpty) {
-      throw AuthException('User not registered. Try another email or sign up');
+    if (recentAttempts.docs.length >= 5) {
+      throw AuthException('Too many failed attempts. Please try again later.');
     }
 
-    final userDoc = snapshot.docs.first;
-    final data = userDoc.data();
-    final passwordHash = data['passwordHash'] as String;
+    LoginAttempt attempt = LoginAttempt(
+      id: const Uuid().v4(),
+      email: email,
+      timestamp: DateTime.now(),
+      success: false,
+    );
 
-    if (!_verifyPassword(password, passwordHash)) {
-      throw AuthException('Wrong credentials. Please try again');
+    try {
+      final snapshot =
+          await usersCollection.where('email', isEqualTo: email).get();
+
+      if (snapshot.docs.isEmpty) {
+        await _logLoginAttempt(attempt);
+        throw AuthException(
+            'User not registered. Try another email or sign up');
+      }
+
+      final userDoc = snapshot.docs.first;
+      final data = userDoc.data();
+      final passwordHash = data['passwordHash'] as String;
+
+      if (!_verifyPassword(password, passwordHash)) {
+        await _logLoginAttempt(attempt);
+        throw AuthException('Wrong credentials. Please try again');
+      }
+
+      attempt = attempt.copyWith(success: true);
+      await _logLoginAttempt(attempt);
+
+      return UserModel.fromMap(data);
+    } catch (e) {
+      rethrow;
     }
+  }
 
-    return UserModel.fromMap(data);
+  Future<void> _logLoginAttempt(LoginAttempt attempt) async {
+    await loginAttempts.add(attempt.toMap());
   }
 
   @override
