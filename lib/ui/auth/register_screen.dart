@@ -4,6 +4,7 @@ import 'package:password_project/ui/auth/auth_view_model.dart';
 import 'package:password_project/ui/auth/components/auth_buttons.dart';
 import 'package:password_project/ui/auth/components/sign_up_form.dart';
 import 'package:password_project/ui/auth/login_screen.dart';
+import 'package:password_project/ui/auth/slider_captcha/show_captcha.dart';
 import 'package:provider/provider.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -46,20 +47,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _signUp(BuildContext context) async {
-    final authViewModel = context.read<AuthViewModel>();
-    FocusScope.of(context).unfocus();
+    final captchaPassed = await showRecaptcha(context);
 
-    if (_formKey.currentState!.validate()) {
-      await authViewModel.registerUser(
-        _emailController.text.trim(),
-        _passwordController.text.trim(),
-        _nameController.text,
-      );
+    if (!captchaPassed) {
+      print("Captcha failed");
+      return;
+    }
 
-      if (authViewModel.errorMessage != null) {
-        _showErrorToast(context, authViewModel.errorMessage!);
-      } else {
-        print('register success');
+    print("Captcha passed");
+
+    if (context.mounted) {
+      final authViewModel = context.read<AuthViewModel>();
+      FocusScope.of(context).unfocus();
+
+      if (_formKey.currentState!.validate()) {
+        await authViewModel.registerUser(
+          _emailController.text.trim(),
+          _passwordController.text.trim(),
+          _nameController.text,
+        );
+
+        if (authViewModel.errorMessage != null) {
+          _showErrorToast(context, authViewModel.errorMessage!);
+        } else {
+          print('register success');
+        }
       }
     }
   }
