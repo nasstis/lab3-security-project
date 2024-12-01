@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crypt/crypt.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:password_project/data/data_sources/user_data_source.dart';
 import 'package:password_project/data/model/user.dart';
 import 'package:password_project/domain/exceptions/auth_excpetions.dart';
@@ -7,6 +9,8 @@ import 'package:uuid/uuid.dart';
 
 class UserDataSourceImpl extends UserDataSource {
   final usersCollection = FirebaseFirestore.instance.collection('users');
+  final _firebaseAuth = FirebaseAuth.instance;
+  final _googleSignIn = GoogleSignIn();
 
   UserDataSourceImpl();
 
@@ -50,6 +54,52 @@ class UserDataSourceImpl extends UserDataSource {
     }
 
     return UserModel.fromMap(data);
+  }
+
+  @override
+  Future<UserModel?> googleSignIn() async {
+    try {
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        return null;
+      }
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final UserCredential userCredential =
+          await _firebaseAuth.signInWithCredential(credential);
+
+      final user = userCredential.user;
+      if (user == null) {
+        throw AuthException('Failed to sign in with Google');
+      }
+
+      final snapshot =
+          await usersCollection.where('email', isEqualTo: user.email).get();
+
+      if (snapshot.docs.isEmpty) {
+        final newUser = UserModel(
+          id: user.uid,
+          email: user.email!,
+          name: user.displayName ?? 'Anonymous',
+          passwordHash: '',
+        );
+
+        await usersCollection.doc(user.uid).set(newUser.toMap());
+        return newUser;
+      }
+
+      final userDoc = snapshot.docs.first;
+      return UserModel.fromMap(userDoc.data());
+    } catch (e) {
+      throw AuthException('Google Sign-In failed: ${e.toString()}');
+    }
   }
 
   String _hashPassword(String password) {

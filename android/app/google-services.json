@@ -12,7 +12,20 @@
           "package_name": "com.security.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "956331446509-tvauk00dklpipuj9k6rc6thnfu2mv1b1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.security.app",
+            "certificate_hash": "e73682befae0bf77c1d2b12b7e202bb1e6bbd9e2"
+          }
+        },
+        {
+          "client_id": "956331446509-lqma4dc5k0hg68n4nd743fb72rc6su79.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyD3UTj8RN0ri9fKt_Moru8nZt2vkzmYKFw"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "956331446509-lqma4dc5k0hg68n4nd743fb72rc6su79.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "956331446509-ji5n9j0vrucedsbpcoua6irjef5dvkbj.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.passwordProject"
+              }
+            }
+          ]
         }
       }
     }
