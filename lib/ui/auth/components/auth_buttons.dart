@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:password_project/ui/auth/auth_view_model.dart';
+import 'package:provider/provider.dart';
 
 class AuthButtons extends StatelessWidget {
   final VoidCallback onSignUpPressed;
@@ -12,6 +15,17 @@ class AuthButtons extends StatelessWidget {
     required this.onLoginPressed,
     this.isLoginScreen = false,
   });
+
+  void _showErrorToast(BuildContext context, String message) {
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.red,
+        ),
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +59,16 @@ class AuthButtons extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         OutlinedButton(
-          onPressed: () {},
+          onPressed: () async {
+            final authViewModel = context.read<AuthViewModel>();
+            await authViewModel.loginWithGoogle();
+
+            if (authViewModel.errorMessage != null) {
+              _showErrorToast(context, authViewModel.errorMessage!);
+            } else {
+              print('login success');
+            }
+          },
           style: OutlinedButton.styleFrom(
             foregroundColor: Colors.black,
             shape:

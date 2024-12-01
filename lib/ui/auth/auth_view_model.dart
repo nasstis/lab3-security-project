@@ -49,6 +49,27 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> loginWithGoogle() async {
+    _setLoading(true);
+    try {
+      _currentUser = await userDataSource.googleSignIn();
+      if (_currentUser != null) {
+        _errorMessage = null;
+      } else {
+        _errorMessage = 'Google Sign-In was canceled by the user.';
+      }
+    } on AuthException catch (e) {
+      _errorMessage = e.message;
+      _currentUser = null;
+    } catch (e) {
+      _errorMessage = 'An unexpected error occurred during Google Sign-In.';
+      _currentUser = null;
+    } finally {
+      _setLoading(false);
+    }
+    notifyListeners();
+  }
+
   void logoutUser() {
     _currentUser = null;
     notifyListeners();
