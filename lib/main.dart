@@ -61,9 +61,11 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _handleDeepLink(Uri uri) {
-    if (uri.path == '/reset-password/') {
+    print(uri.path);
+    if (uri.path == '/reset-password') {
       final token = uri.queryParameters['token'];
       if (token != null) {
+        print('all good');
         WidgetsBinding.instance.addPostFrameCallback((_) {
           navigatorKey.currentState?.pushNamed(
             '/reset-password',
@@ -92,9 +94,7 @@ class _MyAppState extends State<MyApp> {
           navigatorKey: navigatorKey, // Attach the NavigatorKey
           initialRoute: '/',
           routes: {
-            '/': (context) => authViewModel.currentUser == null
-                ? const LoginScreen()
-                : const HomeScreen(),
+            '/': (context) => const LoginScreen(),
             '/reset-password': (context) => const ResetPassword(),
           },
         );

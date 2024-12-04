@@ -4,6 +4,7 @@ import 'package:password_project/ui/auth/auth_view_model.dart';
 import 'package:password_project/ui/auth/components/auth_buttons.dart';
 import 'package:password_project/ui/auth/components/login_form.dart';
 import 'package:password_project/ui/auth/register_screen.dart';
+import 'package:password_project/ui/home/home_screen.dart';
 import 'package:provider/provider.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -51,7 +52,11 @@ class _LoginScreenState extends State<LoginScreen> {
       if (authViewModel.errorMessage != null) {
         _showErrorToast(context, authViewModel.errorMessage!);
       } else {
-        print('login success');
+        Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HomeScreen(),
+            ));
       }
     }
   }

@@ -66,7 +66,7 @@ class UserDataSourceImpl extends UserDataSource {
         .where('success', isEqualTo: false)
         .get();
 
-    if (recentAttempts.docs.length >= 5) {
+    if (recentAttempts.docs.length >= 3) {
       throw AuthException('Too many failed attempts. Please try again later.');
     }
 
@@ -229,9 +229,9 @@ class UserDataSourceImpl extends UserDataSource {
   Future<void> resetPassword(String token, String newPassword) async {
     try {
       final response = await _dio.post(
-        '/reset-password',
+        '/reset-password/?token=$token',
         data: {
-          'token': token,
+          // 'token': token,
           'newPassword': newPassword,
         },
       );

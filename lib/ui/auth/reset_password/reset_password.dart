@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:password_project/ui/auth/auth_view_model.dart';
-import 'package:password_project/ui/auth/login_screen.dart';
 import 'package:password_project/utils/helpers/confirm_password_validator.dart';
 import 'package:password_project/utils/helpers/password_validator.dart';
 import 'package:provider/provider.dart';
@@ -24,13 +23,7 @@ class _ForgotPasswordState extends State<ResetPassword> {
   final ValueNotifier<bool> _showConfirmPassword = ValueNotifier(false);
   bool _passwordError = false;
   bool _confirmPasswordError = false;
-  late final String? token;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    token = ModalRoute.of(context)?.settings.arguments as String?;
-  }
+  String? token;
 
   @override
   void dispose() {
@@ -53,6 +46,7 @@ class _ForgotPasswordState extends State<ResetPassword> {
   @override
   Widget build(BuildContext context) {
     final authViewModel = context.watch<AuthViewModel>();
+    token = ModalRoute.of(context)?.settings.arguments as String?;
 
     return AnnotatedRegion(
         value: const SystemUiOverlayStyle(
@@ -155,12 +149,8 @@ class _ForgotPasswordState extends State<ResetPassword> {
                                                 context,
                                                 'Your password successfully reseted!',
                                                 Colors.black);
-                                            Navigator.pushReplacement(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      const LoginScreen(),
-                                                ));
+                                            Navigator.pushReplacementNamed(
+                                                context, '/');
                                           }
                                         }
                                       }
