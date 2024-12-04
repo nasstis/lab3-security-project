@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:password_project/ui/auth/reset_password/forgot_password.dart';
 import 'package:password_project/utils/helpers/email_validator.dart';
 import 'package:password_project/utils/helpers/password_validator.dart';
 
@@ -52,7 +53,13 @@ class _LoginFormState extends State<LoginForm> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ForgotPassword(),
+                      ));
+                },
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.all(8),
                 ),

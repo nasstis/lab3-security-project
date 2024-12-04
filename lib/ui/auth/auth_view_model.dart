@@ -91,8 +91,37 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void logoutUser() {
-    _currentUser = null;
+  Future<void> sendPasswordResetLink(String email) async {
+    _setLoading(true);
+    try {
+      await userDataSource.sendPasswordResetLink(email);
+      _errorMessage = null;
+    } on AuthException catch (e) {
+      _errorMessage = e.message;
+      log('AuthException occurred: ${e.message}');
+    } catch (e, stackTrace) {
+      _errorMessage = 'An unexpected error occurred. Please try again.';
+      log('Unexpected error: $e\n$stackTrace');
+    } finally {
+      _setLoading(false);
+    }
+    notifyListeners();
+  }
+
+  Future<void> resetPassword(String token, String newPassword) async {
+    _setLoading(true);
+    try {
+      await userDataSource.resetPassword(token, newPassword);
+      _errorMessage = null;
+    } on AuthException catch (e) {
+      _errorMessage = e.message;
+      log('AuthException occurred: ${e.message}');
+    } catch (e, stackTrace) {
+      _errorMessage = 'An unexpected error occurred. Please try again.';
+      log('Unexpected error: $e\n$stackTrace');
+    } finally {
+      _setLoading(false);
+    }
     notifyListeners();
   }
 
