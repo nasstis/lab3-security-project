@@ -6,4 +6,5 @@ abstract class UserDataSource {
   Future<UserModel?> googleSignIn();
   Future<void> sendActivationLink(String email);
   Future<void> sendPasswordResetLink(String email);
+  Future<void> resetPassword(String token, String newPassword);
 }

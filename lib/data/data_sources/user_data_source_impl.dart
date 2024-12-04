@@ -224,4 +224,42 @@ class UserDataSourceImpl extends UserDataSource {
       }
     }
   }
+
+  @override
+  Future<void> resetPassword(String token, String newPassword) async {
+    try {
+      final response = await _dio.post(
+        '/reset-password',
+        data: {
+          'token': token,
+          'newPassword': newPassword,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        log('Password reset successful: ${response.data['message']}');
+      } else {
+        throw AuthException(
+            'Unexpected error: ${response.data['message'] ?? 'Unknown error'}');
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        switch (e.response?.statusCode) {
+          case 400:
+            throw AuthException(
+                e.response?.data['message'] ?? 'Invalid request');
+          case 404:
+            throw AuthException('User not found');
+          case 500:
+            throw AuthException(
+                'Error processing request: ${e.response?.data['message']}');
+          default:
+            throw AuthException(
+                'Unexpected error: ${e.response?.data['message']}');
+        }
+      } else {
+        throw AuthException('Network error: ${e.message}');
+      }
+    }
+  }
 }
