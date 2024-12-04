@@ -5,4 +5,5 @@ abstract class UserDataSource {
   Future<UserModel?> loginUser(String email, String password);
   Future<UserModel?> googleSignIn();
   Future<void> sendActivationLink(String email);
+  Future<void> sendPasswordResetLink(String email);
 }

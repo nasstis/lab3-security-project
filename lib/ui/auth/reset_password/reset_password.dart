@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+import 'package:password_project/ui/auth/auth_view_model.dart';
 import 'package:password_project/utils/helpers/email_validator.dart';
+import 'package:provider/provider.dart';
 
 class ForgotPassword extends StatefulWidget {
   const ForgotPassword({super.key});
@@ -36,6 +38,8 @@ class _ForgotPasswordState extends State<ForgotPassword> {
 
   @override
   Widget build(BuildContext context) {
+    final authViewModel = context.watch<AuthViewModel>();
+
     return AnnotatedRegion(
         value: const SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
@@ -111,19 +115,50 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                               ),
                             ),
                             const Spacer(),
-                            Padding(
+                            if (authViewModel.isLoading)
+                              const Column(
+                                children: [
+                                  CircularProgressIndicator(
+                                    color: Colors.black,
+                                  ),
+                                  SizedBox(
+                                    height: 42,
+                                  )
+                                ],
+                              ),
+                            if (!authViewModel.isLoading)
+                              Padding(
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 24),
                                 child: ElevatedButton(
-                                  onPressed: () {
+                                  onPressed: () async {
                                     FocusScope.of(context).unfocus();
-                                    if (_formKey.currentState!.validate()) {}
+                                    if (_formKey.currentState!.validate()) {
+                                      await authViewModel.sendPasswordResetLink(
+                                        _emailController.text.trim(),
+                                      );
+                                      if (context.mounted) {
+                                        if (authViewModel.errorMessage !=
+                                            null) {
+                                          _showToast(
+                                              context,
+                                              authViewModel.errorMessage!,
+                                              Colors.red);
+                                        } else {
+                                          _showToast(
+                                              context,
+                                              'Reset password link was sent to your email!',
+                                              Colors.black);
+                                        }
+                                      }
+                                    }
                                   },
                                   child: const Padding(
                                     padding: EdgeInsets.symmetric(vertical: 12),
                                     child: Text('Send Link'),
                                   ),
-                                )),
+                                ),
+                              ),
                             const SizedBox(height: 24),
                           ],
                         ),

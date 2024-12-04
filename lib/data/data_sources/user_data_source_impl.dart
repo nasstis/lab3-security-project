@@ -88,7 +88,7 @@ class UserDataSourceImpl extends UserDataSource {
         if (response.data['user'] == null) {
           throw AuthException('Invalid response from server');
         }
-        print(response.data['user']);
+
         attempt = attempt.copyWith(success: true);
         await _logLoginAttempt(attempt);
         return UserModel.fromMap(user);
@@ -181,6 +181,37 @@ class UserDataSourceImpl extends UserDataSource {
         switch (e.response?.statusCode) {
           case 400:
             throw AuthException('Email is required');
+          case 500:
+            throw AuthException(
+                'Error processing request: ${e.response?.data['message']}');
+          default:
+            throw AuthException(
+                'Unexpected error: ${e.response?.data['message']}');
+        }
+      } else {
+        throw AuthException('Network error: ${e.message}');
+      }
+    }
+  }
+
+  @override
+  Future<void> sendPasswordResetLink(String email) async {
+    try {
+      final response = await _dio.post('/send-password-reset-link', data: {
+        'email': email,
+      });
+
+      if (response.statusCode == 200) {
+        log('Password reset link sent successfully');
+      } else {
+        throw AuthException('Unexpected error: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      log('DioException occurred: ${e.message}');
+      if (e.response != null) {
+        switch (e.response?.statusCode) {
+          case 404:
+            throw AuthException('User not found');
           case 500:
             throw AuthException(
                 'Error processing request: ${e.response?.data['message']}');
