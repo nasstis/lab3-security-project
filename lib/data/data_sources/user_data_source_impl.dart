@@ -1,5 +1,7 @@
+import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:crypt/crypt.dart';
+import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:password_project/data/data_sources/user_data_source.dart';
@@ -14,28 +16,42 @@ class UserDataSourceImpl extends UserDataSource {
   final _firebaseAuth = FirebaseAuth.instance;
   final _googleSignIn = GoogleSignIn();
 
+  final Dio _dio = Dio(
+    BaseOptions(
+      baseUrl: 'https://secure-project-api.onrender.com',
+      headers: {'Content-Type': 'application/json'},
+    ),
+  );
+
   UserDataSourceImpl();
 
   @override
   Future<void> registerUser(String email, String password, String name) async {
-    final hashedPassword = _hashPassword(password);
+    try {
+      final response = await _dio.post('/register', data: {
+        'name': name,
+        'email': email,
+        'password': password,
+      });
 
-    final user = UserModel(
-      id: const Uuid().v4(),
-      email: email,
-      name: name,
-      passwordHash: hashedPassword,
-    );
-
-    final snapshot =
-        await usersCollection.where('email', isEqualTo: email).get();
-
-    if (snapshot.docs.isNotEmpty) {
-      throw AuthException(
-          'User already registered. Try another email or login');
+      if (response.statusCode == 201) {
+        log('User registered successfully: ${response.data['userId']}');
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        switch (e.response?.statusCode) {
+          case 400:
+            throw AuthException('The user already exists');
+          case 500:
+            throw AuthException(
+                'Error during registration: ${e.response?.data['msg']}');
+          default:
+            throw AuthException('Unexpected error: ${e.response?.data['msg']}');
+        }
+      } else {
+        throw AuthException('Network error: ${e.message}');
+      }
     }
-
-    await usersCollection.add(user.toMap());
   }
 
   @override
@@ -62,31 +78,40 @@ class UserDataSourceImpl extends UserDataSource {
     );
 
     try {
-      final snapshot =
-          await usersCollection.where('email', isEqualTo: email).get();
+      final response = await _dio.post('/login', data: {
+        'email': email,
+        'password': password,
+      });
 
-      if (snapshot.docs.isEmpty) {
+      if (response.statusCode == 200) {
+        final user = response.data['user'];
+        if (response.data['user'] == null) {
+          throw AuthException('Invalid response from server');
+        }
+        print(response.data['user']);
+        attempt = attempt.copyWith(success: true);
         await _logLoginAttempt(attempt);
-        throw AuthException(
-            'User not registered. Try another email or sign up');
+        return UserModel.fromMap(user);
       }
-
-      final userDoc = snapshot.docs.first;
-      final data = userDoc.data();
-      final passwordHash = data['passwordHash'] as String;
-
-      if (!_verifyPassword(password, passwordHash)) {
+    } on DioException catch (e) {
+      if (e.response != null) {
         await _logLoginAttempt(attempt);
-        throw AuthException('Wrong credentials. Please try again');
+        switch (e.response?.statusCode) {
+          case 401:
+            throw AuthException('Invalid email or password');
+          case 403:
+            throw AuthException('Please verify your email before logging in');
+          case 404:
+            throw AuthException('User not found');
+          default:
+            throw AuthException('Unexpected error: ${e.response?.data['msg']}');
+        }
+      } else {
+        await _logLoginAttempt(attempt);
+        throw AuthException('Network error: ${e.message}');
       }
-
-      attempt = attempt.copyWith(success: true);
-      await _logLoginAttempt(attempt);
-
-      return UserModel.fromMap(data);
-    } catch (e) {
-      rethrow;
     }
+    return null;
   }
 
   Future<void> _logLoginAttempt(LoginAttempt attempt) async {
@@ -125,7 +150,6 @@ class UserDataSourceImpl extends UserDataSource {
           id: user.uid,
           email: user.email!,
           name: user.displayName ?? 'Anonymous',
-          passwordHash: '',
         );
 
         await usersCollection.doc(user.uid).set(newUser.toMap());
@@ -139,11 +163,34 @@ class UserDataSourceImpl extends UserDataSource {
     }
   }
 
-  String _hashPassword(String password) {
-    return Crypt.sha256(password, salt: 'random_salt').toString();
-  }
+  @override
+  Future<void> sendActivationLink(String email) async {
+    try {
+      final response = await _dio.post('/send-activation-link', data: {
+        'email': email,
+      });
 
-  bool _verifyPassword(String password, String hash) {
-    return Crypt(hash).match(password);
+      if (response.statusCode == 200) {
+        log('Activation link sent successfully');
+      } else {
+        throw AuthException('Unexpected error: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      log('DioException occurred: ${e.message}');
+      if (e.response != null) {
+        switch (e.response?.statusCode) {
+          case 400:
+            throw AuthException('Email is required');
+          case 500:
+            throw AuthException(
+                'Error processing request: ${e.response?.data['message']}');
+          default:
+            throw AuthException(
+                'Unexpected error: ${e.response?.data['message']}');
+        }
+      } else {
+        throw AuthException('Network error: ${e.message}');
+      }
+    }
   }
 }

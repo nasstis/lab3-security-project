@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/foundation.dart';
 import 'package:password_project/data/data_sources/user_data_source.dart';
 import 'package:password_project/data/model/user.dart';
@@ -26,6 +28,8 @@ class AuthViewModel extends ChangeNotifier {
       _errorMessage = e.message;
       _currentUser = null;
     } catch (e) {
+      log('Unexpected error occurred: $e');
+
       _errorMessage = 'An unexpected error occurred. Please try again.';
       _currentUser = null;
     } finally {
@@ -64,6 +68,23 @@ class AuthViewModel extends ChangeNotifier {
     } catch (e) {
       _errorMessage = 'An unexpected error occurred during Google Sign-In.';
       _currentUser = null;
+    } finally {
+      _setLoading(false);
+    }
+    notifyListeners();
+  }
+
+  Future<void> sendActivationLink(String email) async {
+    _setLoading(true);
+    try {
+      await userDataSource.sendActivationLink(email);
+      _errorMessage = null;
+    } on AuthException catch (e) {
+      _errorMessage = e.message;
+      log('AuthException occurred: ${e.message}');
+    } catch (e, stackTrace) {
+      _errorMessage = 'An unexpected error occurred. Please try again.';
+      log('Unexpected error: $e\n$stackTrace');
     } finally {
       _setLoading(false);
     }

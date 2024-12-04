@@ -53,9 +53,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       print("Captcha failed");
       return;
     }
-
     print("Captcha passed");
-
     if (context.mounted) {
       final authViewModel = context.read<AuthViewModel>();
       FocusScope.of(context).unfocus();
@@ -70,7 +68,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
         if (authViewModel.errorMessage != null) {
           _showErrorToast(context, authViewModel.errorMessage!);
         } else {
-          print('register success');
+          authViewModel.sendActivationLink(_emailController.text.trim()).then(
+            (_) {
+              if (authViewModel.errorMessage == null) {
+                SchedulerBinding.instance.addPostFrameCallback((_) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                          'A confirmation email has been sent to you. Confirm your email address to complete the registration'),
+                    ),
+                  );
+                });
+              }
+            },
+          );
         }
       }
     }
