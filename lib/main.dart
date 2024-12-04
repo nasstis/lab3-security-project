@@ -6,7 +6,6 @@ import 'package:password_project/firebase_options.dart';
 import 'package:password_project/ui/auth/auth_view_model.dart';
 import 'package:password_project/ui/auth/login_screen.dart';
 import 'package:password_project/ui/auth/reset_password/reset_password.dart';
-import 'package:password_project/ui/home/home_screen.dart';
 import 'package:password_project/utils/theme/theme_data/elevated_button.dart';
 import 'package:password_project/utils/theme/theme_data/input_decoration.dart';
 import 'package:password_project/utils/theme/theme_data/text_button.dart';
